@@ -883,3 +883,5 @@ asmlinkage long sys_execveat(int dfd, const char __user *filename,
 			const char __user *const __user *envp, int flags);
 
 #endif
+
+asmlinkage long sys_scallinfo(int scallnum);

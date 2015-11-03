@@ -1,8 +1,8 @@
 VERSION = 3
 PATCHLEVEL = 19
 SUBLEVEL = 8
-EXTRAVERSION = -ckt7
-NAME = Sedated Swine
+EXTRAVERSION = -sysinfo
+NAME = Keith Richards
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"

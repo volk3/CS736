@@ -1,0 +1,5 @@
+config SCALLINFO
+	bool "information about system calls"
+	default y
+	help
+		A lightweight framework for information about syscalls
