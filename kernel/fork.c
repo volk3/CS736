@@ -1478,6 +1478,12 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 		p->parent_exec_id = current->self_exec_id;
 	}
 
+    /* zero sys call table */
+    int i;
+    for(i = 0; i < 500; ++i)
+        p->syscalltable[i] = 0;
+
+
 	spin_lock(&current->sighand->siglock);
 
 	/*
