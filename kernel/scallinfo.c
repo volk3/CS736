@@ -5,7 +5,7 @@
 #include <linux/sched.h>
 
 asmlinkage long sys_scallinfo(int scnum) {
-	printk("called scallinfo arg: %d\n", scnum);
+	printk("\ncalled scallinfo arg: %d\n", scnum);
     struct task_struct* ts;
     // ts = find_task_by_vpid(scnum);
     ts = find_task_by_vpid(scnum);
@@ -17,6 +17,15 @@ asmlinkage long sys_scallinfo(int scnum) {
     for(i = 0; i < 500; i++){
         total += ts->syscalltable[i];
     }
-    printk("total: %d\n", total);
+    printk("pid of requested: %d\n", ts->pid);
+    printk("total syscall requested: %d\n", total);
+
+    // get my total for testing to see if this actually works
+    ts = current;
+    total = 0;
+    for(i = 0; i < 500; i++)
+        total += ts->syscalltable[i];
+    printk("pid of myself: %d\n", ts->pid);
+    printk("total syscall me: %d\n\n", total);
     return total;
 }
