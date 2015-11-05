@@ -45,14 +45,14 @@ asmlinkage long sys_scallinfo(int pid, int nreq, int *reqs, int *res) {
 
     ureq = (int*) kmalloc(sizeof(int) * nreq, GFP_KERNEL);
     ures = (int*) kmalloc(sizeof(int) * nreq, GFP_KERNEL);
-    if(ureq == 0){
+    if(ureq == NULL || ures == NULL){
         printk("scallinfo: kmalloc failed\n");
         return -1;
     }
 
     cr = copy_from_user(ureq, reqs, sizeof(int) * nreq);
-    if(cr == 0){
-        printk("scallinfo: copy from user failed\n");
+    if(cr != 0){
+        printk("scallinfo: copy from user failed to copy %d bytes\n", cr);
         goto free_and_die;
     }
 
