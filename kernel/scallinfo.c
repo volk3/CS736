@@ -16,7 +16,7 @@
 asmlinkage long sys_scallinfo(int pid, int nreq, int *reqs, int *res) {
     struct task_struct *ts;
     int r_ok, w_ok, i, *ureq, cr, *ures, req;
-    long total;
+
     ts = find_task_by_vpid(pid);
 
     if(ts == NULL){
@@ -50,7 +50,7 @@ asmlinkage long sys_scallinfo(int pid, int nreq, int *reqs, int *res) {
         return -1;
     }
 
-    cr = copy_from_user(ureq, req, sizeof(int) * nreq);
+    cr = copy_from_user(ureq, reqs, sizeof(int) * nreq);
     if(cr == 0){
         printk("scallinfo: copy from user failed\n");
         goto free_and_die;
