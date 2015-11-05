@@ -3,6 +3,7 @@
 #include <linux/syscalls.h>
 #include <linux/linkage.h>
 #include <linux/sched.h>
+#include <linux/slab.h>
 
 /* Returns information about how many system calls the requested
  * process is using.
@@ -14,7 +15,7 @@
  */
 asmlinkage long sys_scallinfo(int pid, int nreq, int *reqs, int *res) {
     struct task_struct *ts;
-    int r_ok, w_ok, i;
+    int r_ok, w_ok, i, *ureq, cr, *ures, req;
     long total;
     ts = find_task_by_vpid(pid);
 
@@ -41,10 +42,43 @@ asmlinkage long sys_scallinfo(int pid, int nreq, int *reqs, int *res) {
         printk("scallinfo: res pointed to invalid memory\n");
         return -1;
     }
-        
-    total = 0;
-    for(i = 0; i < 500; i++){
-        total += ts->syscalltable[i];
+
+    ureq = (int*) kmalloc(sizeof(int) * nreq, GFP_KERNEL);
+    ures = (int*) kmalloc(sizeof(int) * nreq, GFP_KERNEL);
+    if(ureq == 0){
+        printk("scallinfo: kmalloc failed\n");
+        return -1;
     }
-    return total;
+
+    cr = copy_from_user(ureq, req, sizeof(int) * nreq);
+    if(cr == 0){
+        printk("scallinfo: copy from user failed\n");
+        goto free_and_die;
+    }
+
+    for(i = 0; i < nreq; i++){
+        req = ureq[i];
+        if(req > -1 && req < 500){
+            ures[i] = ts->syscalltable[req];
+        } else {
+            printk("scallinfo: requested invalid syscall: %d\n", req);
+            goto free_and_die;
+        }
+    }
+
+    cr = copy_to_user(res, ures, sizeof(int) * nreq);
+    if(cr == 0){
+        printk("scallinfo: failed copy back\n");
+        goto free_and_die;
+    }
+
+    kfree(ureq);
+    kfree(ures);
+
+    return 0;
+
+    free_and_die:
+    kfree(ureq);
+    kfree(ures);
+    return -1;
 }
