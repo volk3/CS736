@@ -67,8 +67,8 @@ asmlinkage long sys_scallinfo(int pid, int nreq, int *reqs, int *res) {
     }
 
     cr = copy_to_user(res, ures, sizeof(int) * nreq);
-    if(cr == 0){
-        printk("scallinfo: failed copy back\n");
+    if(cr != 0){
+        printk("scallinfo: failed copy back %d bytes\n", cr);
         goto free_and_die;
     }
 
