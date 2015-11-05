@@ -884,4 +884,4 @@ asmlinkage long sys_execveat(int dfd, const char __user *filename,
 
 #endif
 
-asmlinkage long sys_scallinfo(int scallnum);
+asmlinkage long sys_scallinfo(int pid, int nreq, int *req, int *res);
