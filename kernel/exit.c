@@ -686,7 +686,7 @@ void do_exit(long code)
 
     // TODO: this looks dangerous
     if(tsk->scinfo_table != NULL)
-        kfree(scinfo_table);
+        kfree(tsk->scinfo_table);
 
 	/*
 	 * If do_exit is called because this processes oopsed, it's possible

@@ -5,53 +5,7 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
 
-/* Returns information about how many system calls the requested
- * process is using.
- *
- * scitype:
- *      0 GET_TRACE, retrieve tracing information
- * 		1 START_TRACE, start tracing this process
- *		2 STOP_TRACE, stop tracing this process
- * pid:  The pid of the process we're interested in. 
- *       Only used in GET_TRACE, STOP_TRACE
- * nreq: The number of requests. 
- * 	     Used in GET_TRACE
- * reqs: Pointer to array of syscall numbers we're interested in. 
- * 	     Used in GET_TRACE
- * res:  Pointer to array which the call returns results. 
- *       Used in GET_TRACE
- */
-asmlinkage long sys_scallinfo(int scitype, int pid, int nreq, int *reqs, int *res) {
-    struct task_struct *ts;
-    int r_ok, w_ok, i, *ureq, cr, *ures, req;
-
-    ts = find_task_by_vpid(pid);
-
-    if(ts == NULL){
-        printk("scallinfo: find by vpid NULL\n");
-        return -1;
-    }
-
-    if(ts->pid != pid){
-        printk("scallinfo: find by vpid returned incorrect process: %d\n", ts->pid);
-        return -1;
-    }
-
-    switch(scitype){
-    case 0: 
-        return sci_trace_get(ts, nreq, reqs, res);
-    case 1:
-        return sci_trace_start(ts);
-    case 2:
-        return sci_trace_stop(ts);
-    default:
-        printk("scallinfo: unrecognized enum input, options are 0,1,2\n");
-        return -1;
-    }
-    
-}
-
-int sci_trace_get(task_struct *ts, int nreq, int *reqs, int *res){
+int sci_trace_get(struct task_struct *ts, int nreq, int *reqs, int *res){
     int r_ok, w_ok, i, *ureq, cr, *ures, req;
 
     if(ts->scinfo_table == NULL) {
@@ -89,7 +43,7 @@ int sci_trace_get(task_struct *ts, int nreq, int *reqs, int *res){
     for(i = 0; i < nreq; i++){
         req = ureq[i];
         if(req > -1 && req < 500){
-            ures[i] = ts->syscalltable[req];
+            ures[i] = ts->scinfo_table[req];
         } else {
             printk("scallinfo: requested invalid syscall: %d\n", req);
             goto free_and_die;
@@ -121,7 +75,7 @@ int sci_trace_start(struct task_struct *ts) {
         return -1;
     }
     
-    ts->scinfo_table = kmalloc(sizeof(int) * num_calls); // TODO: magic
+    ts->scinfo_table = kmalloc(sizeof(int) * num_calls, GFP_KERNEL);
     if(ts->scinfo_table == NULL){
         printk("scallinfo: error mallocing table\n");
         return -1;
@@ -142,6 +96,52 @@ int sci_trace_stop(struct task_struct *ts) {
     ts->scinfo_table = NULL;
 
     return 0;
+}
+
+
+/* Returns information about how many system calls the requested
+ * process is using.
+ *
+ * scitype:
+ *      0 GET_TRACE, retrieve tracing information
+ * 		1 START_TRACE, start tracing this process
+ *		2 STOP_TRACE, stop tracing this process
+ * pid:  The pid of the process we're interested in. 
+ *       Only used in GET_TRACE, STOP_TRACE
+ * nreq: The number of requests. 
+ * 	     Used in GET_TRACE
+ * reqs: Pointer to array of syscall numbers we're interested in. 
+ * 	     Used in GET_TRACE
+ * res:  Pointer to array which the call returns results. 
+ *       Used in GET_TRACE
+ */
+asmlinkage long sys_scallinfo(int scitype, int pid, int nreq, int *reqs, int *res) {
+    struct task_struct *ts;
+
+    ts = find_task_by_vpid(pid);
+
+    if(ts == NULL){
+        printk("scallinfo: find by vpid NULL\n");
+        return -1;
+    }
+
+    if(ts->pid != pid){
+        printk("scallinfo: find by vpid returned incorrect process: %d\n", ts->pid);
+        return -1;
+    }
+
+    switch(scitype){
+    case 0: 
+        return sci_trace_get(ts, nreq, reqs, res);
+    case 1:
+        return sci_trace_start(ts);
+    case 2:
+        return sci_trace_stop(ts);
+    default:
+        printk("scallinfo: unrecognized enum input, options are 0,1,2\n");
+        return -1;
+    }
+    
 }
 
 
