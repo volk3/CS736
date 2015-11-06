@@ -65,7 +65,6 @@ static void exit_mm(struct task_struct *tsk);
 
 static void __unhash_process(struct task_struct *p, bool group_dead)
 {
-	//printk("EXIT TEST PRINT");	
 
 	nr_threads--;
 	detach_pid(p, PIDTYPE_PID);
@@ -86,7 +85,6 @@ static void __unhash_process(struct task_struct *p, bool group_dead)
  */
 static void __exit_signal(struct task_struct *tsk)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct signal_struct *sig = tsk->signal;
 	bool group_dead = thread_group_leader(tsk);
@@ -164,7 +162,6 @@ static void __exit_signal(struct task_struct *tsk)
 
 static void delayed_put_task_struct(struct rcu_head *rhp)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *tsk = container_of(rhp, struct task_struct, rcu);
 
@@ -176,7 +173,6 @@ static void delayed_put_task_struct(struct rcu_head *rhp)
 
 void release_task(struct task_struct *p)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *leader;
 	int zap_leader;
@@ -232,7 +228,6 @@ repeat:
 static int will_become_orphaned_pgrp(struct pid *pgrp,
 					struct task_struct *ignored_task)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *p;
 
@@ -252,7 +247,6 @@ static int will_become_orphaned_pgrp(struct pid *pgrp,
 
 int is_current_pgrp_orphaned(void)
 {
-        //printk("EXIT TEST PRINT");
 
 	int retval;
 
@@ -265,7 +259,6 @@ int is_current_pgrp_orphaned(void)
 
 static bool has_stopped_jobs(struct pid *pgrp)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *p;
 
@@ -285,7 +278,6 @@ static bool has_stopped_jobs(struct pid *pgrp)
 static void
 kill_orphaned_pgrp(struct task_struct *tsk, struct task_struct *parent)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct pid *pgrp = task_pgrp(tsk);
 	struct task_struct *ignored_task = tsk;
@@ -316,7 +308,6 @@ kill_orphaned_pgrp(struct task_struct *tsk, struct task_struct *parent)
  */
 void mm_update_next_owner(struct mm_struct *mm)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *c, *g, *p = current;
 
@@ -406,7 +397,6 @@ assign_new_owner:
  */
 static void exit_mm(struct task_struct *tsk)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct mm_struct *mm = tsk->mm;
 	struct core_state *core_state;
@@ -462,7 +452,6 @@ static void exit_mm(struct task_struct *tsk)
 
 static struct task_struct *find_alive_thread(struct task_struct *p)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *t;
 
@@ -477,7 +466,6 @@ static struct task_struct *find_child_reaper(struct task_struct *father)
 	__releases(&tasklist_lock)
 	__acquires(&tasklist_lock)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct pid_namespace *pid_ns = task_active_pid_ns(father);
 	struct task_struct *reaper = pid_ns->child_reaper;
@@ -512,7 +500,6 @@ static struct task_struct *find_child_reaper(struct task_struct *father)
 static struct task_struct *find_new_reaper(struct task_struct *father,
 					   struct task_struct *child_reaper)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *thread, *reaper;
 
@@ -549,7 +536,6 @@ static struct task_struct *find_new_reaper(struct task_struct *father,
 static void reparent_leader(struct task_struct *father, struct task_struct *p,
 				struct list_head *dead)
 {
-        //printk("EXIT TEST PRINT");
 
 	if (unlikely(p->exit_state == EXIT_DEAD))
 		return;
@@ -580,7 +566,6 @@ static void reparent_leader(struct task_struct *father, struct task_struct *p,
 static void forget_original_parent(struct task_struct *father,
 					struct list_head *dead)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *p, *t, *reaper;
 
@@ -619,7 +604,6 @@ static void forget_original_parent(struct task_struct *father,
  */
 static void exit_notify(struct task_struct *tsk, int group_dead)
 {
-        //printk("EXIT TEST PRINT");
 
 	bool autoreap;
 	struct task_struct *p, *n;
@@ -662,7 +646,6 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 #ifdef CONFIG_DEBUG_STACK_USAGE
 static void check_stack_usage(void)
 {
-        //printk("EXIT TEST PRINT");
 
 	static DEFINE_SPINLOCK(low_water_lock);
 	static int lowest_to_date = THREAD_SIZE;
@@ -687,7 +670,6 @@ static inline void check_stack_usage(void) {}
 
 void do_exit(long code)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *tsk = current;
 	int group_dead;
@@ -701,6 +683,10 @@ void do_exit(long code)
 		panic("Aiee, killing interrupt handler!");
 	if (unlikely(!tsk->pid))
 		panic("Attempted to kill the idle task!");
+
+    // TODO: this looks dangerous
+    if(tsk->scinfo_table != NULL)
+        kfree(scinfo_table);
 
 	/*
 	 * If do_exit is called because this processes oopsed, it's possible
@@ -870,7 +856,6 @@ EXPORT_SYMBOL_GPL(do_exit);
 
 void complete_and_exit(struct completion *comp, long code)
 {
-        //printk("EXIT TEST PRINT");
 
 	if (comp)
 		complete(comp);
@@ -891,7 +876,6 @@ SYSCALL_DEFINE1(exit, int, error_code)
 void
 do_group_exit(int exit_code)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct signal_struct *sig = current->signal;
 
@@ -1009,7 +993,6 @@ static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
  */
 static int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 {
-        //printk("EXIT TEST PRINT");
 
 	int state, retval, status;
 	pid_t pid = task_pid_vnr(p);
@@ -1192,7 +1175,6 @@ static int *task_stopped_code(struct task_struct *p, bool ptrace)
 static int wait_task_stopped(struct wait_opts *wo,
 				int ptrace, struct task_struct *p)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct siginfo __user *infop;
 	int retval, exit_code, *p_code, why;
@@ -1278,7 +1260,6 @@ unlock_sig:
  */
 static int wait_task_continued(struct wait_opts *wo, struct task_struct *p)
 {
-        //printk("EXIT TEST PRINT");
 
 	int retval;
 	pid_t pid;
@@ -1335,7 +1316,6 @@ static int wait_task_continued(struct wait_opts *wo, struct task_struct *p)
 static int wait_consider_task(struct wait_opts *wo, int ptrace,
 				struct task_struct *p)
 {
-        //printk("EXIT TEST PRINT");
 
 	/*
 	 * We can race with wait_task_zombie() from another thread.
@@ -1462,7 +1442,6 @@ static int wait_consider_task(struct wait_opts *wo, int ptrace,
  */
 static int do_wait_thread(struct wait_opts *wo, struct task_struct *tsk)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *p;
 
@@ -1478,7 +1457,6 @@ static int do_wait_thread(struct wait_opts *wo, struct task_struct *tsk)
 
 static int ptrace_do_wait(struct wait_opts *wo, struct task_struct *tsk)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *p;
 
@@ -1516,7 +1494,6 @@ void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
 
 static long do_wait(struct wait_opts *wo)
 {
-        //printk("EXIT TEST PRINT");
 
 	struct task_struct *tsk;
 	int retval;
