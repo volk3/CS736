@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <signal.h>
+#include <string.h>
 
 // this should probably be defined
 // somewhere else
@@ -89,6 +90,15 @@ void exec_parent(int rpid) {
     }
 }
 
+int monitorpid(int pid){
+    int r = scallinfo_s(SCI_START, pid);
+    if(r != 0){
+        return -1;
+    }
+    exec_parent(pid);
+    return 0;
+}
+
 void parent_sig_handler(int sig) {
     if(sig == SIGKILL){
         scallinfo_s(SCI_STOP,forked_pid);
@@ -100,10 +110,13 @@ void parent_sig_handler(int sig) {
 
 int main(int argc, char** argv){
     if(argc < 2){
-        printf("usage: %s pid\n", argv[0]);
+        printf("usage: %s -p pid\n", argv[0]);
+        printf("alter: %s program to launch\n", argv[0]);
         return 0;
-    } else {
-        forked_pid = atoi(argv[1]);
+    }
+
+    if(argv[1][0] == '-' && argv[1][1] == 'p'){
+        return monitorpid(atoi(argv[2]));
     }
     
     signal(SIGKILL, parent_sig_handler);
@@ -114,17 +127,15 @@ int main(int argc, char** argv){
 
     int cpid = fork();
     if(cpid == 0){
+
+        // read this pipe to know when to begin operation
+        // (parent has begun monitoring the child)
         close(fd[1]);
         read(fd[0], rbuf, sizeof(rbuf));
-        char *args[argc -2];
-
-        // this doesn't work (should marshal args)
-        for(int i = 0; i < argc - 2; i++) {
-            char add[strlen(argv[i+2]) + 1];
-            strcpy(add, argv[i+2]);
-            args[i] = add;
-        }
-        execv(argv[1], NULL);
+        char *args[argc - 1]; // leave space for NULL
+        memcpy(args, (argv + 2), (argc - 2) * sizeof(char*));
+        args[argc-2] = NULL;
+        execv(argv[1], args);
 
         printf("failed to exec child\n");
         return -1;
