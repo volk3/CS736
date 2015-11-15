@@ -1280,6 +1280,18 @@ enum perf_event_task_context {
 	perf_nr_task_contexts,
 };
 
+/*for scallist.c*/
+struct syscall_struct {
+	struct syscall_struct *prev;
+	struct syscall_struct *next;
+	int* scinfo_table;
+	char comm[TASK_COMM_LEN];
+	pid_t pid;
+};
+
+extern void scallist_init(void);
+int flush_syscall_list(struct task_struct *task); 
+	
 struct task_struct {
 	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
 	void *stack;
