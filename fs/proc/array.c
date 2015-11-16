@@ -161,6 +161,7 @@ static inline void task_state(struct seq_file *m, struct pid_namespace *ns,
 	const struct cred *cred;
 	pid_t ppid, tpid = 0, tgid, ngid;
 	unsigned int max_fds = 0;
+        int i;
 
 	rcu_read_lock();
 	ppid = pid_alive(p) ?
@@ -207,6 +208,20 @@ static inline void task_state(struct seq_file *m, struct pid_namespace *ns,
 		seq_printf(m, "%d ",
 			   from_kgid_munged(user_ns, GROUP_AT(group_info, g)));
 	put_cred(cred);
+
+        seq_printf(m, "\nSyscalls:\t");
+        
+	task_lock(p);
+        if(p->scinfo_table == 0)
+        {
+        	seq_printf(m, "X");
+  	}
+	else
+	{
+		for(i = 0; i < 323; i++)
+			seq_printf(m, "%d ", (p->scinfo_table)[i]);
+        }  
+	task_unlock(p);
 
 	seq_putc(m, '\n');
 }
@@ -362,6 +377,28 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
 	task_cpus_allowed(m, task);
 	cpuset_task_status_allowed(m, task);
 	task_context_switch_counts(m, task);
+	return 0;
+}
+
+int proc_pid_scalls(struct seq_file *m, struct pid_namespace *ns,
+			struct pid *pid, struct task_struct *task)
+{
+	int i;
+	int numcalls = 500;
+
+	task_lock(task);
+	if(task->scinfo_table == 0)
+        {
+        	seq_printf(m, "X");
+  	}
+	else
+	{
+		for(i = 0; i < numcalls; i++)
+			seq_printf(m, "%d ", (task->scinfo_table)[i]);
+        }
+	task_unlock(task);
+  
+	seq_putc(m, '\n');
 	return 0;
 }
 

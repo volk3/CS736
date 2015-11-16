@@ -684,9 +684,10 @@ void do_exit(long code)
 	if (unlikely(!tsk->pid))
 		panic("Attempted to kill the idle task!");
 
-    // TODO: this looks dangerous
-    if(tsk->scinfo_table != NULL)
-        kfree(tsk->scinfo_table);
+	// TODO: this looks dangerous
+	flush_syscall_list(tsk);
+	if(tsk->scinfo_table != NULL)
+	        kfree(tsk->scinfo_table);
 
 	/*
 	 * If do_exit is called because this processes oopsed, it's possible
