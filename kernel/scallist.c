@@ -74,7 +74,6 @@ int flush_syscall_list(struct task_struct *task) {
 			head -> prev = node;
 			head = node;
 		}
-		spin_unlock(&lock);
 
 		/*spin_lock(&lock);
 		count++;
@@ -95,8 +94,8 @@ int flush_syscall_list(struct task_struct *task) {
 			(node->scinfo_table)[i] += (task->scinfo_table)[i];
 			(task->scinfo_table)[i] = 0;
 		}
-		spin_unlock(&lock);
 	}
+	spin_unlock(&lock);
 
 	return 0;
 }
