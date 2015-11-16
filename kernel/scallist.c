@@ -9,12 +9,38 @@
 
 struct syscall_struct *head = NULL;
 struct syscall_struct *tail = NULL;
-int count = 0;
+//int count = 0;
 
 DEFINE_SPINLOCK(lock);
 
 void __init scallist_init(void) {
 	spin_lock_init(&lock);
+}
+
+struct syscall_struct* find_match(struct task_struct *task) {
+	struct syscall_struct *node;
+	int i;
+	int match;
+	
+	node = head;
+
+	while(node != NULL) {
+		match = 1;
+		for(i = 0; i < TASK_COMM_LEN; i++)
+			if((node->comm)[i] != (task->comm)[i]) {
+				match = 0;
+				break;
+			}
+		if(match == 1)
+			break;
+
+		node = node->next;
+		
+		if(node == head)
+			node = NULL;
+	}
+
+	return node;
 }
 
 int flush_syscall_list(struct task_struct *task) {
@@ -24,42 +50,53 @@ int flush_syscall_list(struct task_struct *task) {
 	if(task->scinfo_table == NULL)
 		return 0;
 
-	node = kmalloc(sizeof(struct syscall_struct), GFP_KERNEL);
-	node->scinfo_table = task->scinfo_table;
-	task->scinfo_table = kmalloc(500*sizeof(int), GFP_KERNEL);
-	for(i = 0; i < TASK_COMM_LEN; i++)
-		(node->comm)[i] = (task->comm)[i];
-	node->pid = task->pid;
+	spin_lock(&lock);
+	node = find_match(task);
 
-	spin_lock(&lock);	
-	if(head == NULL) {
-		node -> prev = node;
-		node -> next = node;
-		head = node;
-		tail = node;
+	if(node == NULL) {
+		node = kmalloc(sizeof(struct syscall_struct), GFP_KERNEL);
+		node->scinfo_table = task->scinfo_table;
+		task->scinfo_table = kzalloc(500*sizeof(int), GFP_KERNEL);
+		for(i = 0; i < TASK_COMM_LEN; i++)
+			(node->comm)[i] = (task->comm)[i];
+		node->pid = task->pid;
+			
+		if(head == NULL) {
+			node -> prev = node;
+			node -> next = node;
+			head = node;
+			tail = node;
+		}
+		else {
+			node -> next = head;
+			node -> prev = tail;
+			tail -> next = node;
+			head -> prev = node;
+			head = node;
+		}
+		spin_unlock(&lock);
+
+		/*spin_lock(&lock);
+		count++;
+		if(count == 20) {  //a limit of 19 nodes allowed
+			node = tail;
+			tail = tail -> prev;
+			head -> prev = tail;
+			tail -> next = head;
+		
+			kfree(node -> scinfo_table);
+			kfree(node);
+			count--;
+		}	
+		spin_unlock(&lock);*/
 	}
 	else {
-		node -> next = head;
-		node -> prev = tail;
-		tail -> next = node;
-		head -> prev = node;
-		head = node;
+		for(i = 0; i < 500; i++) {
+			(node->scinfo_table)[i] += (task->scinfo_table)[i];
+			(task->scinfo_table)[i] = 0;
+		}
+		spin_unlock(&lock);
 	}
-	spin_unlock(&lock);
-
-	spin_lock(&lock);
-	count++;
-	if(count == 20) {  //a limit of 19 nodes allowed
-		node = tail;
-		tail = tail -> prev;
-		head -> prev = tail;
-		tail -> next = head;
-		
-		kfree(node -> scinfo_table);
-		kfree(node);
-		count--;
-	}	
-	spin_unlock(&lock);
 
 	return 0;
 }
