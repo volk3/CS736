@@ -61,10 +61,16 @@
 #include <linux/err.h>
 
 //#include <procupdate.h>
-#include <asm/current.h>
+//#include <asm/current.h>
 
 /* Avoid __ASSEMBLER__'ifying <linux/audit.h> just for this.  */
 #include <linux/elf-em.h>
+
+//#include <asm/current.h>
+//#include <asm/asm.h>
+//#include <linux/sched.h>
+//#include <linux/kernel.h>
+
 #define AUDIT_ARCH_X86_64	(EM_X86_64|__AUDIT_ARCH_64BIT|__AUDIT_ARCH_LE)
 #define __AUDIT_ARCH_64BIT 0x80000000
 #define __AUDIT_ARCH_LE	   0x40000000
@@ -429,10 +435,28 @@ system_call_fastpath:
 	cmpl $__NR_syscall_max,%eax
 #endif
 	ja ret_from_sys_call  /* and return regs->ax */
-	SAVE_ARGS 8
-	movq %rax, %rdi
+
+	GET_THREAD_INFO(%rcx)
+	mov 0x0(%rcx),%rcx
+	cmpq $0x0,0x9c8(%rcx)	
+	
+	je no_update
+
+	mov 0x9c8(%rcx),%rcx
+	addl $0x1,(%rcx,%rax,4)
+
+	/* sub $0x10,%rsp
+	mov %rax,(%rsp)
+	mov %rdi,0x08(%rsp)
+
+	movq %rax,%rdi
 	call procupdate
-	RESTORE_ARGS 1, 8
+
+	mov (%rsp),%rax
+	mov 0x08(%rsp),%rdi
+	add $0x10,%rsp */
+
+no_update:
 	movq %r10,%rcx
 	call *sys_call_table(,%rax,8)  # XXX:	 rip relative
 	movq %rax,RAX-ARGOFFSET(%rsp)

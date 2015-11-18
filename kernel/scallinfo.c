@@ -115,7 +115,7 @@ int sci_trace_stop(struct task_struct *ts) {
  * res:  Pointer to array which the call returns results. 
  *       Used in GET_TRACE
  */
-asmlinkage long sys_scallinfo(int scitype, int pid, int nreq, int *reqs, int *res) {
+asmlinkage long sys_scallinfo(int scitype, int pid, int nreq, int *reqs, int *res){
     struct task_struct *ts;
 
     ts = find_task_by_vpid(pid);
@@ -137,6 +137,8 @@ asmlinkage long sys_scallinfo(int scitype, int pid, int nreq, int *reqs, int *re
         return sci_trace_start(ts);
     case 2:
         return sci_trace_stop(ts);
+    //case 3:
+    //	return next_flush(res, comm);
     default:
         printk("scallinfo: unrecognized enum input, options are 0,1,2\n");
         return -1;

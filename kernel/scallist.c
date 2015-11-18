@@ -9,6 +9,7 @@
 
 struct syscall_struct *head = NULL;
 struct syscall_struct *tail = NULL;
+//struct syscall_struct *current = NULL;
 //int count = 0;
 
 DEFINE_SPINLOCK(lock);
@@ -99,3 +100,42 @@ int flush_syscall_list(struct task_struct *task) {
 
 	return 0;
 }
+
+/*int next_flush(int *res, char *comm) {
+	int cr;
+
+	spin_lock(&lock);
+	current = tail;
+	if(current == NULL)
+		spin_unlock(&lock);
+		return 1;
+	else {
+		if(head == tail) {
+			head = NULL;
+			tail = NULL;
+		}
+		else {
+			tail = tail -> prev;
+			head -> prev = tail;
+			tail -> next = head;
+		}
+		
+		cr = copy_to_user(res, current->scinfo_table, sizeof(int) * 500);
+    		if(cr != 0){
+        		printk("scallist: failed copy back %d bytes\n", cr);
+			spin_unlock(&lock);
+        		return -1;
+    		}
+		cr = copy_to_user(comm, current->comm, sizeof(char) * 16);
+		if(cr != 0){
+			printk("scallist: failed copy back %d bytes\n", cr);
+			spin_unlock(&lock);
+        		return -1;
+		}
+		
+		kfree(current->scinfo_table);
+		kfree(current);
+	}
+	spin_unlock(&lock);
+	return 0;
+}*/
