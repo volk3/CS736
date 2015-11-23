@@ -7,10 +7,11 @@
 
 // the following is brittle and needs to actually be based on the
 // number of system calls in a specific system
-#define NSYSCALL 340
+#define NSYSCALL 324
 
 int syscnt_get(struct task_struct *ts, int *res){
-    int w_ok, i, cr, *ures;
+    int w_ok, i, cr;
+    int ures[NSYSCALL];
 
     if(ts->syscnt_table == NULL) {
         printk("syscnt: tried to access syscnt infomation on unallocated table\n");
@@ -24,12 +25,6 @@ int syscnt_get(struct task_struct *ts, int *res){
         return -1;
     }
 
-    ures = (int*) kmalloc(sizeof(int) * NSYSCALL, GFP_KERNEL);
-    if(ures == NULL){
-        printk("syscnt: kmalloc failed\n");
-        return -1;
-    }
-
     for(i = 0; i < NSYSCALL; i++)
         ures[i] = ts->syscnt_table[i];
 
@@ -37,17 +32,10 @@ int syscnt_get(struct task_struct *ts, int *res){
     
     if(cr != 0){
         printk("syscnt: failed copy back %d bytes\n", cr);
-        goto free_and_die;
+        return -1;
     }
 
-    kfree(ures);
-
     return 0;
-
-free_and_die:
-
-    kfree(ures);
-    return -1;
 }
 
 int syscnt_start(struct task_struct *ts) {
@@ -112,11 +100,11 @@ asmlinkage long sys_syscnt(int sctype, int pid, int *res){
     }
 
     switch(sctype){
-    case 0: 
+    case 0: // GET
         return syscnt_get(ts, res);
-    case 1:
+    case 1: // START
         return syscnt_start(ts);
-    case 2:
+    case 2: // STOP
         return syscnt_stop(ts);
     default:
         printk("syscnt: unrecognized enum input, options are 0,1,2\n");

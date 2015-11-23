@@ -380,19 +380,18 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
 	return 0;
 }
 
+#define NSYSCALL 324
+
 int proc_pid_syscnt(struct seq_file *m, struct pid_namespace *ns,
 	struct pid *pid, struct task_struct *task)
 {
 	int i;
-	int numcalls = 500;
+	int numcalls = NSYSCALL;
 
 	task_lock(task);
-	if(task->syscnt_table == 0)
-	{
+	if(task->syscnt_table == 0)	{
 		seq_printf(m, "X");
-	}
-	else
-	{
+	} else {
 		for(i = 0; i < numcalls; i++)
 			seq_printf(m, "%d ", (task->syscnt_table)[i]);
 	}
