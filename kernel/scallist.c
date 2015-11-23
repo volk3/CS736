@@ -48,7 +48,7 @@ int flush_syscall_list(struct task_struct *task) {
 	int i;
 	struct syscall_struct *node;
 	
-	if(task->scinfo_table == NULL)
+	if(task->syscnt_table == NULL)
 		return 0;
 
 	spin_lock(&lock);
@@ -56,8 +56,8 @@ int flush_syscall_list(struct task_struct *task) {
 
 	if(node == NULL) {
 		node = kmalloc(sizeof(struct syscall_struct), GFP_KERNEL);
-		node->scinfo_table = task->scinfo_table;
-		task->scinfo_table = kzalloc(500*sizeof(int), GFP_KERNEL);
+		node->syscnt_table = task->syscnt_table;
+		task->syscnt_table = kzalloc(500*sizeof(int), GFP_KERNEL);
 		for(i = 0; i < TASK_COMM_LEN; i++)
 			(node->comm)[i] = (task->comm)[i];
 		node->pid = task->pid;
@@ -92,8 +92,8 @@ int flush_syscall_list(struct task_struct *task) {
 	}
 	else {
 		for(i = 0; i < 500; i++) {
-			(node->scinfo_table)[i] += (task->scinfo_table)[i];
-			(task->scinfo_table)[i] = 0;
+			(node->syscnt_table)[i] += (task->syscnt_table)[i];
+			(task->syscnt_table)[i] = 0;
 		}
 	}
 	spin_unlock(&lock);

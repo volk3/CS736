@@ -1284,7 +1284,7 @@ enum perf_event_task_context {
 struct syscall_struct {
 	struct syscall_struct *prev;
 	struct syscall_struct *next;
-	int* scinfo_table;
+	int* syscnt_table;
 	char comm[TASK_COMM_LEN];
 	pid_t pid;
 };
@@ -1722,7 +1722,7 @@ struct task_struct {
 #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
 	unsigned long	task_state_change;
 #endif
-	int *scinfo_table;
+	int *syscnt_table;
 };
 
 /* Future-safe accessor for struct task_struct's cpus_allowed. */

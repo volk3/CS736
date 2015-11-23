@@ -1,0 +1,5 @@
+config SYSCNT
+	bool "information about system calls"
+	default y
+	help
+		A lightweight framework for information counting syscall usage per process

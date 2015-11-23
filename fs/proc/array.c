@@ -161,7 +161,7 @@ static inline void task_state(struct seq_file *m, struct pid_namespace *ns,
 	const struct cred *cred;
 	pid_t ppid, tpid = 0, tgid, ngid;
 	unsigned int max_fds = 0;
-        int i;
+				int i;
 
 	rcu_read_lock();
 	ppid = pid_alive(p) ?
@@ -206,21 +206,21 @@ static inline void task_state(struct seq_file *m, struct pid_namespace *ns,
 	group_info = cred->group_info;
 	for (g = 0; g < group_info->ngroups; g++)
 		seq_printf(m, "%d ",
-			   from_kgid_munged(user_ns, GROUP_AT(group_info, g)));
+			from_kgid_munged(user_ns, GROUP_AT(group_info, g)));
 	put_cred(cred);
 
-        seq_printf(m, "\nSyscalls:\t");
-        
+	seq_printf(m, "\nSyscalls:\t");
+
 	task_lock(p);
-        if(p->scinfo_table == 0)
-        {
-        	seq_printf(m, "X");
-  	}
+	if(p->syscnt_table == NULL)
+	{
+		seq_printf(m, "X");
+	}
 	else
 	{
 		for(i = 0; i < 323; i++)
-			seq_printf(m, "%d ", (p->scinfo_table)[i]);
-        }  
+			seq_printf(m, "%d ", (p->syscnt_table)[i]);
+	}
 	task_unlock(p);
 
 	seq_putc(m, '\n');
@@ -249,7 +249,7 @@ void render_sigset_t(struct seq_file *m, const char *header,
 }
 
 static void collect_sigign_sigcatch(struct task_struct *p, sigset_t *ign,
-				    sigset_t *catch)
+						sigset_t *catch)
 {
 	struct k_sigaction *k;
 	int i;
@@ -309,7 +309,7 @@ static void render_cap_t(struct seq_file *m, const char *header,
 	seq_puts(m, header);
 	CAP_FOR_EACH_U32(__capi) {
 		seq_printf(m, "%08x",
-			   a->cap[CAP_LAST_U32 - __capi]);
+				 a->cap[CAP_LAST_U32 - __capi]);
 	}
 	seq_putc(m, '\n');
 }
@@ -380,24 +380,24 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
 	return 0;
 }
 
-int proc_pid_scalls(struct seq_file *m, struct pid_namespace *ns,
-			struct pid *pid, struct task_struct *task)
+int proc_pid_syscnt(struct seq_file *m, struct pid_namespace *ns,
+	struct pid *pid, struct task_struct *task)
 {
 	int i;
 	int numcalls = 500;
 
 	task_lock(task);
-	if(task->scinfo_table == 0)
-        {
-        	seq_printf(m, "X");
-  	}
+	if(task->syscnt_table == 0)
+	{
+		seq_printf(m, "X");
+	}
 	else
 	{
 		for(i = 0; i < numcalls; i++)
-			seq_printf(m, "%d ", (task->scinfo_table)[i]);
-        }
+			seq_printf(m, "%d ", (task->syscnt_table)[i]);
+	}
 	task_unlock(task);
-  
+	
 	seq_putc(m, '\n');
 	return 0;
 }
@@ -630,7 +630,7 @@ get_children_pid(struct inode *inode, struct pid *pid_prev, loff_t pos)
 	if (pid_prev) {
 		task = pid_task(pid_prev, PIDTYPE_PID);
 		if (task && task->real_parent == start &&
-		    !(list_empty(&task->sibling))) {
+				!(list_empty(&task->sibling))) {
 			if (list_is_last(&task->sibling, &start->children))
 				goto out;
 			task = list_first_entry(&task->sibling,

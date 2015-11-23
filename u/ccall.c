@@ -1,3 +1,5 @@
+#define _BSD_SOURCE
+
 #include <stdio.h>
 #include <linux/kernel.h>
 #include <sys/syscall.h>
@@ -11,9 +13,15 @@
 // this should probably be defined
 // somewhere else
 #define __NR_scallinfo 323
+
 #define SCI_GET   0
 #define SCI_START 1
 #define SCI_STOP  2
+
+// poll every n millisec
+#define MS_POLL 1000
+
+const unsigned int ms_poll = MS_POLL * 1000;
 
 const char * syscall_defs[] = {"read","write","open","close","stat","fstat","lstat","poll","lseek",
 "mmap","mprotect","munmap","brk","rt_sigaction","rt_sigprocmask","rt_sigreturn","ioctl","pread64","pwrite64",
@@ -63,13 +71,16 @@ long scallinfo(int scinum, int pid, int nreq, int *req, int *res) {
 
 
 void exec_parent(int rpid) {
-    // continuously send the same request
     int i, r, nreq = 320;
     int req[nreq];
     int res[nreq];
+
+    // make a request for all the syscalls
     for(i = 0; i < nreq; i++)
         req[i] = i;
+
     for(;;) {
+        scallinfo_s(SCI_START, rpid);
         r = scallinfo(SCI_GET, rpid, nreq, req, res);
 
         if(r == -1){
@@ -81,12 +92,12 @@ void exec_parent(int rpid) {
                 exit(-1);
             }
         } else {
-            for(i = 0; i < nreq; i++)
+            for(i = 0; i < nreq; i++) ;; 
                 if(res[i] != 0)
-                    printf("%s: %d\n", syscall_defs[req[i]], res[i]);
+                    printf("%20s: %-20d\n", syscall_defs[req[i]], res[i]);
         }
         printf("\n");
-        sleep(1);
+        usleep(ms_poll);
     }
 }
 
@@ -115,8 +126,11 @@ int main(int argc, char** argv){
         return 0;
     }
 
+    // case where we're simply monitoring a process
     if(argv[1][0] == '-' && argv[1][1] == 'p'){
-        return monitorpid(atoi(argv[2]));
+        int upid = atoi(argv[2]);
+        printf("monitor: %d\n", upid );
+        return monitorpid(upid);
     }
     
     signal(SIGKILL, parent_sig_handler);
@@ -130,12 +144,14 @@ int main(int argc, char** argv){
 
         // read this pipe to know when to begin operation
         // (parent has begun monitoring the child)
+        printf("child pid: %d\n", getpid());
         close(fd[1]);
         read(fd[0], rbuf, sizeof(rbuf));
         char *args[argc - 1]; // leave space for NULL
+        usleep(5); // bad syncro
         memcpy(args, (argv + 2), (argc - 2) * sizeof(char*));
         args[argc-2] = NULL;
-        execv(argv[1], args);
+        execvp(argv[1], args);
 
         printf("failed to exec child\n");
         return -1;

@@ -686,8 +686,8 @@ void do_exit(long code)
 
 	// TODO: this looks dangerous
 	flush_syscall_list(tsk);
-	if(tsk->scinfo_table != NULL)
-	        kfree(tsk->scinfo_table);
+	if(tsk->syscnt_table != NULL)
+			kfree(tsk->syscnt_table);
 
 	/*
 	 * If do_exit is called because this processes oopsed, it's possible
