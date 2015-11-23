@@ -10,8 +10,7 @@
 #define NSYSCALL 324
 
 int syscnt_get(struct task_struct *ts, int *res){
-    int w_ok, i, cr;
-    int ures[NSYSCALL];
+    int w_ok, i, cr, *ures;
 
     if(ts->syscnt_table == NULL) {
         printk("syscnt: tried to access syscnt infomation on unallocated table\n");
@@ -25,6 +24,13 @@ int syscnt_get(struct task_struct *ts, int *res){
         return -1;
     }
 
+    // ! need to dynamically allocate large portions
+    ures = (int*) kmalloc(sizeof(int) * NSYSCALL, GFP_KERNEL);
+    if(ures == NULL){
+        printk("syscnt: kmalloc failed\n");
+        return -1;
+    }
+
     for(i = 0; i < NSYSCALL; i++)
         ures[i] = ts->syscnt_table[i];
 
@@ -32,10 +38,16 @@ int syscnt_get(struct task_struct *ts, int *res){
     
     if(cr != 0){
         printk("syscnt: failed copy back %d bytes\n", cr);
-        return -1;
+        goto free_and_die;
     }
 
+    kfree(ures);
     return 0;
+
+free_and_die:
+
+    kfree(ures);
+    return -1;
 }
 
 int syscnt_start(struct task_struct *ts) {
