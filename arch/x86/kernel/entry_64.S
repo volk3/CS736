@@ -438,11 +438,11 @@ system_call_fastpath:
 
 	GET_THREAD_INFO(%rcx)
 	mov 0x0(%rcx),%rcx
-	cmpq $0x0,0x9c8(%rcx)	
+	cmpq $0x0,0x9d8(%rcx)	
 	
 	je no_update
 
-	mov 0x9c8(%rcx),%rcx
+	mov 0x9d8(%rcx),%rcx
 	addl $0x1,(%rcx,%rax,4)
 
 	/* sub $0x10,%rsp

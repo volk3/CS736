@@ -2345,7 +2345,8 @@ asmlinkage __visible void schedule_tail(struct task_struct *prev)
 
 asmlinkage __visible void procupdate(uint64_t callnum)
 {
-	current->syscnt_table[callnum]++;
+	int* call_ptr = current->syscnt_table[callnum];
+    *call_ptr = *call_ptr + 1;
 }
 
 /*
